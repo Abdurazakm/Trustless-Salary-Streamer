@@ -169,6 +169,56 @@ This shift is profound. It moves the power dynamic from the employer to the work
 
 ## Getting Started
 
+### Local Developer Quickstart (Canonical Env Keys)
+
+Use the following keys as the canonical source of truth:
+
+- `DEPLOYER_PRIVATE_KEY`
+- `RPC_URL`
+- `CHAIN_ID`
+- `VITE_FACTORY_ADDRESS`
+- `VITE_RPC_URL`
+- `VITE_CHAIN_ID`
+
+Copy and fill environment templates:
+
+```bash
+cp contracts/.env.example contracts/.env
+cp frontend/.env.example frontend/.env
+```
+
+Run tests:
+
+```bash
+cd contracts
+forge test -vv
+```
+
+Deploy factory (local or testnet depending on env and `--rpc-url`):
+
+```bash
+cd contracts
+source .env
+forge script script/DeployTrustlessSalaryStreamer.s.sol:DeployTrustlessSalaryStreamer \
+  --rpc-url "$RPC_URL" \
+  --broadcast
+```
+
+The deploy script prints these values for frontend wiring:
+
+- `STREAM_FACTORY_ADDRESS`
+- `VITE_FACTORY_ADDRESS`
+- `VITE_RPC_URL`
+- `VITE_CHAIN_ID`
+
+Set them in `frontend/.env`, then run the app:
+
+```bash
+cd frontend
+npm install
+npm run dev
+```
+
 To create an RSS salary contract:
 
 1. Determine the worker's wallet address

@@ -75,19 +75,21 @@ contract TrustlessSalaryStreamer {
     // =========================================================================
 
     constructor(
+        address _employer,
         address _worker,
         uint256 _totalDuration,
         StreamTypes.PaymentPeriod _paymentPeriod
     ) payable {
         require(msg.value > 0, "SalaryStreamer: salary must be greater than zero");
         require(_totalDuration > 0, "SalaryStreamer: duration must be greater than zero");
+        require(_employer != address(0), "SalaryStreamer: employer cannot be zero address");
         require(_worker != address(0), "SalaryStreamer: worker cannot be zero address");
         require(
-            _worker != msg.sender,
+            _worker != _employer,
             "SalaryStreamer: employer and worker cannot be the same address"
         );
 
-        employer = msg.sender;
+        employer = _employer;
         worker = _worker;
         totalSalary = msg.value;
         totalDuration = _totalDuration;
@@ -123,9 +125,16 @@ contract TrustlessSalaryStreamer {
             "SalaryStreamer: no unearned funds available to clawback"
         );
 
+        uint256 workerOwed = earned - amountWithdrawn;
         uint256 unearned = totalSalary - earned;
 
+        amountWithdrawn = earned;
         status = StreamTypes.Status.ENDED;
+
+        if (workerOwed > 0) {
+            (bool workerPaid, ) = worker.call{value: workerOwed}("");
+            require(workerPaid, "SalaryStreamer: worker payout failed");
+        }
 
         (bool success, ) = employer.call{value: unearned}("");
         require(success, "SalaryStreamer: clawback transfer failed");
